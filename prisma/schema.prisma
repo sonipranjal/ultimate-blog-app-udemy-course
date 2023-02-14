@@ -58,6 +58,8 @@ model User {
   comments      Comment[]
   likes         Like[]
   bookmarks     Bookmark[]
+  followedBy    User[]     @relation("UserFollows")
+  followings    User[]     @relation("UserFollows")
 }
 
 model VerificationToken {
