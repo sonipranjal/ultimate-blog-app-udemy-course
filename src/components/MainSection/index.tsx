@@ -1,13 +1,22 @@
 import React from "react";
 import { CiSearch } from "react-icons/ci";
 import { HiChevronDown } from "react-icons/hi";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { trpc } from "../../utils/trpc";
 
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import Post from "../Post";
+import { BiLoaderCircle } from "react-icons/bi";
 
 const MainSection = () => {
-  const getPosts = trpc.post.getPosts.useQuery();
+  const getPosts = trpc.post.getPosts.useInfiniteQuery(
+    {},
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }
+  );
+
+  console.log(getPosts.data?.pages.flatMap((page) => page.posts));
 
   return (
     <main className="col-span-8 border-r border-gray-300 px-24">
@@ -62,8 +71,28 @@ const MainSection = () => {
           </div>
         )}
 
-        {getPosts.isSuccess &&
-          getPosts.data.map((post) => <Post {...post} key={post.id} />)}
+        <InfiniteScroll
+          dataLength={
+            getPosts.data?.pages.flatMap((page) => page.posts).length ?? 0
+          } //This is important field to render the next data
+          next={getPosts.fetchNextPage}
+          hasMore={Boolean(getPosts.hasNextPage)}
+          loader={
+            <div className="flex h-full w-full items-center justify-center">
+              <BiLoaderCircle className="animate-spin" />
+            </div>
+          }
+          endMessage={
+            <p className="text-center">
+              <b>Yay! You have seen it all</b>
+            </p>
+          }
+        >
+          {getPosts.isSuccess &&
+            getPosts.data?.pages
+              .flatMap((page) => page.posts)
+              .map((post) => <Post {...post} key={post.id} />)}
+        </InfiniteScroll>
       </div>
     </main>
   );

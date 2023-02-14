@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { GlobalContext } from "../../contexts/GlobalContextProvider";
 import Modal from "../Modal";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,18 +11,28 @@ import TagsAutocompletion from "../TagsAutocompletion";
 import TagForm from "../TagForm";
 import { FaTimes } from "react-icons/fa";
 
+// import ReactQuill from "react-quill";
+import dynamic from "next/dynamic";
+
+const ReactQuill = dynamic(() => import("react-quill"), {
+  ssr: false,
+});
+import "react-quill/dist/quill.snow.css";
+
 export type TAG = { id: string; name: string };
 
 type WriteFormType = {
   title: string;
   description: string;
   text: string;
+  html: string;
 };
 
 export const writeFormSchema = z.object({
   title: z.string().min(20),
   description: z.string().min(60),
-  text: z.string().min(100),
+  text: z.string().min(100).optional(),
+  html: z.string().min(100),
 });
 
 const WriteFormModal = () => {
@@ -33,6 +43,7 @@ const WriteFormModal = () => {
     handleSubmit,
     formState: { errors },
     reset,
+    control,
   } = useForm<WriteFormType>({
     resolver: zodResolver(writeFormSchema),
   });
@@ -110,7 +121,10 @@ const WriteFormModal = () => {
           </>
         )}
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={handleSubmit((data) => {
+            console.log(data);
+            onSubmit(data);
+          })}
           className="relative flex flex-col items-center justify-center space-y-4"
         >
           {createPost.isLoading && (
@@ -138,14 +152,30 @@ const WriteFormModal = () => {
           <p className="w-full pb-2 text-left text-sm text-red-500">
             {errors.description?.message}
           </p>
-          <textarea
+          {/* <textarea
             {...register("text")}
             id="mainBody"
             cols={10}
             rows={10}
             className="h-full w-full rounded-xl border border-gray-300 p-4 outline-none focus:border-gray-600"
             placeholder="blog main body..."
+          /> */}
+          <Controller
+            name="html"
+            control={control}
+            render={({ field }) => (
+              <div className="w-full">
+                <ReactQuill
+                  theme="snow"
+                  {...field}
+                  placeholder="Write the blog body here"
+                  value={field.value}
+                  onChange={(value) => field.onChange(value)}
+                />
+              </div>
+            )}
           />
+
           <p className="w-full pb-2 text-left text-sm text-red-500">
             {errors.text?.message}
           </p>
