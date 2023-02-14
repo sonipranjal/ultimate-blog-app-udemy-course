@@ -6,9 +6,15 @@ import MainLayout from "../layouts/MainLayout";
 import { trpc } from "../utils/trpc";
 import { FcLike, FcLikePlaceholder } from "react-icons/fc";
 import CommentSidebar from "../components/CommentSidebar";
+import { BiImageAdd } from "react-icons/bi";
+import UnsplashGallary from "../components/UnsplashGallary";
+import { useSession } from "next-auth/react";
+import Image from "next/image";
 
 const PostPage = () => {
   const router = useRouter();
+
+  const { data } = useSession();
 
   const postRoute = trpc.useContext().post;
 
@@ -39,8 +45,19 @@ const PostPage = () => {
 
   const [showCommentSidebar, setShowCommentSidebar] = useState(false);
 
+  const [isUnsplashModalOpen, setIsUnsplashModalOpen] = useState(false);
+
   return (
     <MainLayout>
+      {getPost.isSuccess && getPost.data && (
+        <UnsplashGallary
+          isUnsplashModalOpen={isUnsplashModalOpen}
+          setIsUnsplashModalOpen={setIsUnsplashModalOpen}
+          postId={getPost.data?.id}
+          slug={getPost.data.slug}
+        />
+      )}
+
       {getPost.data?.id && (
         <CommentSidebar
           showCommentSidebar={showCommentSidebar}
@@ -48,7 +65,6 @@ const PostPage = () => {
           postId={getPost.data?.id}
         />
       )}
-
       {getPost.isLoading && (
         <div className="flex h-full w-full items-center justify-center space-x-4">
           <div>
@@ -95,7 +111,22 @@ const PostPage = () => {
       <div className="flex h-full w-full flex-col items-center justify-center p-10">
         <div className="flex w-full max-w-screen-lg flex-col space-y-6">
           <div className="relative h-[60vh] w-full rounded-xl bg-gray-300 shadow-lg">
-            {/* here we will render our image */}
+            {getPost.isSuccess && getPost.data?.featuredImage && (
+              <Image
+                src={getPost.data?.featuredImage}
+                alt={getPost.data?.title}
+                fill
+                className="rounded-xl"
+              />
+            )}
+            {data?.user?.id === getPost.data?.authorId && (
+              <div
+                onClick={() => setIsUnsplashModalOpen(true)}
+                className="absolute top-2 left-2 z-10 cursor-pointer rounded-md bg-black/30 p-2 text-white hover:bg-black"
+              >
+                <BiImageAdd className="text-2xl" />
+              </div>
+            )}
             <div className="absolute flex h-full w-full items-center justify-center ">
               <div className="rounded-xl bg-black bg-opacity-50 p-4 text-3xl text-white">
                 {getPost.data?.title}

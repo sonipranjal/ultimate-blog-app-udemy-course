@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import slugify from "slugify";
 import { z } from "zod";
 import { writeFormSchema } from "../../../components/WriteFormModal";
@@ -5,11 +6,23 @@ import { router, protectedProcedure, publicProcedure } from "../trpc";
 
 export const postRouter = router({
   createPost: protectedProcedure
-    .input(writeFormSchema)
+    .input(
+      writeFormSchema.and(
+        z.object({
+          tagsIds: z
+            .array(
+              z.object({
+                id: z.string(),
+              })
+            )
+            .optional(),
+        })
+      )
+    )
     .mutation(
       async ({
         ctx: { prisma, session },
-        input: { title, description, text },
+        input: { title, description, text, tagsIds },
       }) => {
         // create a function that checks whether the post with this title exists
 
@@ -24,6 +37,44 @@ export const postRouter = router({
                 id: session.user.id,
               },
             },
+            tags: {
+              connect: tagsIds,
+            },
+          },
+        });
+      }
+    ),
+
+  updatePostFeaturedImage: protectedProcedure
+    .input(
+      z.object({
+        imageUrl: z.string().url(),
+        postId: z.string(),
+      })
+    )
+    .mutation(
+      async ({ ctx: { prisma, session }, input: { imageUrl, postId } }) => {
+        // we have to check if the user is owner of the given post
+
+        const postData = await prisma.post.findUnique({
+          where: {
+            id: postId,
+          },
+        });
+
+        if (postData?.authorId !== session.user.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "you are not owner of this post",
+          });
+        }
+
+        await prisma.post.update({
+          where: {
+            id: postId,
+          },
+          data: {
+            featuredImage: imageUrl,
           },
         });
       }
@@ -40,6 +91,7 @@ export const postRouter = router({
         title: true,
         description: true,
         createdAt: true,
+        featuredImage: true,
         author: {
           select: {
             name: true,
@@ -54,7 +106,15 @@ export const postRouter = router({
               },
             }
           : false,
+        tags: {
+          select: {
+            name: true,
+            id: true,
+            slug: true,
+          },
+        },
       },
+      take: 10,
     });
 
     return posts;
@@ -83,6 +143,9 @@ export const postRouter = router({
                 },
               }
             : false,
+          authorId: true,
+          slug: true,
+          featuredImage: true,
         },
       });
 

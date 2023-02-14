@@ -34,6 +34,7 @@
     "react-icons": "^4.7.1",
     "slugify": "^1.6.5",
     "superjson": "1.9.1",
+    "unsplash-js": "^7.0.15",
     "validator": "^13.7.0",
     "zod": "^3.18.0"
   },

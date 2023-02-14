@@ -9,6 +9,9 @@ import { toast } from "react-hot-toast";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import TagsAutocompletion from "../TagsAutocompletion";
 import TagForm from "../TagForm";
+import { FaTimes } from "react-icons/fa";
+
+export type TAG = { id: string; name: string };
 
 type WriteFormType = {
   title: string;
@@ -45,11 +48,17 @@ const WriteFormModal = () => {
     },
   });
 
+  const [selectedTags, setSelectedTags] = useState<TAG[]>([]);
+
   const onSubmit = (data: WriteFormType) => {
-    createPost.mutate(data);
+    createPost.mutate(
+      selectedTags.length > 0 ? { ...data, tagsIds: selectedTags } : data
+    );
   };
 
   const [isTagCreateModalOpen, setIsTagCreateModalOpen] = useState(false);
+
+  const getTags = trpc.tag.getTags.useQuery();
 
   return (
     <>
@@ -57,21 +66,49 @@ const WriteFormModal = () => {
         isOpen={isWriteModalOpen}
         onClose={() => setIsWriteModalOpen(false)}
       >
-        <TagForm
-          isOpen={isTagCreateModalOpen}
-          onClose={() => setIsTagCreateModalOpen(false)}
-        />
-        <div className="my-4 flex w-full items-center space-x-4">
-          <div className="z-10 w-4/5">
-            <TagsAutocompletion />
-          </div>
-          <button
-            onClick={() => setIsTagCreateModalOpen(true)}
-            className="space-x-3 whitespace-nowrap rounded border border-gray-200 px-4 py-2 text-sm transition hover:border-gray-900 hover:text-gray-900"
-          >
-            Create Tag
-          </button>
-        </div>
+        {getTags.isSuccess && (
+          <>
+            <TagForm
+              isOpen={isTagCreateModalOpen}
+              onClose={() => setIsTagCreateModalOpen(false)}
+            />
+            <div className="my-4 flex w-full items-center space-x-4">
+              <div className="z-10 w-4/5">
+                <TagsAutocompletion
+                  tags={getTags.data}
+                  setSelectedTags={setSelectedTags}
+                  selectedTags={selectedTags}
+                />
+              </div>
+              <button
+                onClick={() => setIsTagCreateModalOpen(true)}
+                className="space-x-3 whitespace-nowrap rounded border border-gray-200 px-4 py-2 text-sm transition hover:border-gray-900 hover:text-gray-900"
+              >
+                Create Tag
+              </button>
+            </div>
+            <div className="my-4 flex w-full flex-wrap items-center">
+              {selectedTags.map((tag) => (
+                <div
+                  key={tag.id}
+                  className="m-2 flex items-center justify-center space-x-2 whitespace-nowrap rounded-2xl bg-gray-200/50 px-5 py-3"
+                >
+                  <div>{tag.name}</div>
+                  <div
+                    onClick={() =>
+                      setSelectedTags((prev) =>
+                        prev.filter((currTag) => currTag.id !== tag.id)
+                      )
+                    }
+                    className="cursor-pointer"
+                  >
+                    <FaTimes />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="relative flex flex-col items-center justify-center space-y-4"

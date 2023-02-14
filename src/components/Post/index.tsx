@@ -70,15 +70,30 @@ const Post = ({ ...post }: PostProps) => {
           </p>
         </div>
         <div className="col-span-4">
-          <div className="h-full w-full transform rounded-xl bg-gray-300 transition duration-300 hover:scale-105 hover:shadow-xl"></div>
+          <div className="h-full w-full transform rounded-xl bg-gray-300 transition duration-300 hover:scale-105 hover:shadow-xl">
+            {post.featuredImage && (
+              <Image
+                src={post.featuredImage}
+                alt={post.title}
+                fill
+                className="rounded-xl"
+              />
+            )}
+          </div>
         </div>
       </Link>
       <div>
         <div className="flex w-full items-center justify-between space-x-4">
           <div className="flex items-center space-x-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-2xl bg-gray-200/50 px-5 py-3">
-                tag {i}
+            {post.tags.map((tag) => (
+              <div
+                key={tag.id}
+                onClick={() => {
+                  // redirect the user to specific tag page, where all the post related to that tag should be shown
+                }}
+                className="rounded-2xl bg-gray-200/50 px-5 py-3"
+              >
+                {tag.name}
               </div>
             ))}
           </div>
