@@ -62,6 +62,7 @@ export const userRouter = router({
               title: true,
               description: true,
               createdAt: true,
+              featuredImage: true,
               author: {
                 select: {
                   name: true,

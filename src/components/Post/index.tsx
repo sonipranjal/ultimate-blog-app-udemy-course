@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { RouterOutputs } from "../../utils/trpc";
 import { trpc } from "../../utils/trpc";
 
-type PostProps = RouterOutputs["post"]["getPosts"][number];
+type PostProps = RouterOutputs["post"]["getPosts"]["posts"][number];
 
 const Post = ({ ...post }: PostProps) => {
   const [isBookmarked, setIsBookmarked] = useState(
